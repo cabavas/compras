@@ -27,6 +27,22 @@ export const styles = StyleSheet.create({
         paddingTop: 32,
         marginTop: 24
     },
+    totalContainer: {
+        backgroundColor: '#F1F5F0',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        gap: 4,
+    },
+    totalLabel: {
+        fontSize: 14,
+        color: '#52634F',
+    },
+    totalValue: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#245C2A',
+    },
     filters: {
         width: '100%',
         flexDirection: 'row',
@@ -42,5 +58,13 @@ export const styles = StyleSheet.create({
         fontSize: 12,
         color: "#828282",
         fontWeight: 600
-    }
+    },
+    inputRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    input: {
+        flex: 1,
+        width: 'auto',
+    },
 })

@@ -17,6 +17,7 @@ export function Item({ item, onRemove, ...rest }: Props) {
                 ? <CircleCheck />
                 : <CircleDashed />}
             <Text style={styles.text}>{item.name}</Text>
+            <Text style={styles.text}>R$ {item.total.toFixed(2)}</Text>
             <TouchableOpacity
                 style={styles.clearButton}
                 onPress={(event) => {

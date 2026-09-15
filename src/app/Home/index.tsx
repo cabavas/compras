@@ -18,6 +18,8 @@ export default function Home() {
 
   const [item, setItem] = useState('');
   const [itens, setItens] = useState<ItemType[]>([]);
+  const [quantidade, setQuantidade] = useState('');
+  const [preco, setPreco] = useState('');
   const [filtro, setFiltro] = useState<FilterStatus>(FilterStatus.PENDING);
 
   useEffect(() => {
@@ -33,26 +35,47 @@ export default function Home() {
   }
 
   async function adicionarItem() {
+    const quantity = Number(quantidade.trim().replace(',', '.'));
+    const price = Number(preco.trim().replace(',', '.'));
     if (!item.trim()) {
+      Alert.alert('Nome obrigatório', 'Por favor, insira o nome do item.');
       return;
     }
 
-    const itensSalvos = await AsyncStorage.getItem('itens');
-
-    const itens = itensSalvos ? JSON.parse(itensSalvos) : [];
-
-    const novoItem: ItemType = {
-      id: Date.now().toString(),
-      name: item.trim(),
-      status: FilterStatus.PENDING
+    if (
+      !quantidade || isNaN(quantity) || quantity <= 0
+    ) {
+      Alert.alert('Quantidade inválida', 'Por favor, insira uma quantidade válida.');
+      return;
     }
 
-    itens.push(novoItem);
+    if (
+      !preco || isNaN(price) || price <= 0
+    ) {
+      Alert.alert('Preço inválido', 'Por favor, insira um preço válido.');
+      return;
+    }
 
-    await AsyncStorage.setItem('itens', JSON.stringify(itens));
+    const novoItem: ItemType = {
+      id: new Date().getTime().toString(),
+      name: item,
+      quantity: quantity,
+      price: price,
+      total: quantity * price,
+      status: FilterStatus.PENDING,
+    };
 
-    setItens(itens);
-    setItem('');
+    const itensAtualizados = [...itens, novoItem];
+
+    try {
+      await AsyncStorage.setItem('itens', JSON.stringify(itensAtualizados));
+      setItens(itensAtualizados);
+      setItem('');
+      setQuantidade('');
+      setPreco('');
+    } catch {
+      Alert.alert('Erro ao adicionar item', 'Não foi possível adicionar o item. Tente novamente.');
+    }
   }
 
   async function removerItem(id: string) {
@@ -96,6 +119,12 @@ export default function Home() {
   }
 
   const itensFiltrados = itens.filter((item) => item.status === filtro);
+  const totalComprado = itens.reduce((total, item) => {
+    if (item.status !== FilterStatus.DONE) return total;
+
+    const subtotal = item.quantity * item.price;
+    return Number.isFinite(subtotal) ? total + Math.round(subtotal * 100) : total;
+  }, 0) / 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -107,12 +136,38 @@ export default function Home() {
           value={item}
           onChangeText={setItem}
         />
+        <View style={styles.inputRow}>
+          <Input
+            style={styles.input}
+            placeholder="Quantidade"
+            value={quantidade}
+            onChangeText={setQuantidade}
+            keyboardType="decimal-pad"
+          />
+
+          <Input
+            style={styles.input}
+            placeholder="Preço unitário (R$)"
+            value={preco}
+            onChangeText={setPreco}
+            keyboardType="decimal-pad"
+          />
+        </View>
         <Button
           title="Adicionar"
           onPress={adicionarItem} />
       </View>
 
       <View style={styles.content}>
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>Total comprado</Text>
+          <Text style={styles.totalValue}>
+            {totalComprado.toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            })}
+          </Text>
+        </View>
         <View style={styles.filters}>
           {
             FILTER_STATUS.map((status) => (

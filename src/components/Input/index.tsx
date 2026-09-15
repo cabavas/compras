@@ -2,11 +2,11 @@ import { TextInput, TextInputProps} from "react-native";
 
 import { styles } from "./styles";
 
-export function Input({...rest}: TextInputProps) {
+export function Input({style, ...rest}: TextInputProps) {
     return (
         <TextInput 
         {...rest}
-        style={styles.container}
+        style={[styles.container, style]}
         />
     )
     }
