@@ -1,6 +1,6 @@
 import { FilterStatus } from "./FilterStatus";
 
-export type Item = {
+export type ItemType = {
     id: string;
     name: string;
     status: FilterStatus;
