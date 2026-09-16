@@ -211,6 +211,9 @@ export default function Home() {
               accessibilityLabel={item.status === FilterStatus.PENDING ? `Comprar ${item.name}` : item.name}
             />
           )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Nenhum item adicionado.</Text>
+          }
         />
       </View>
       <Modal

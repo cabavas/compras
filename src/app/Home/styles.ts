@@ -83,4 +83,10 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 12,
     },
+    emptyText: {
+        fontSize: 14,
+        color: '#828282',
+        textAlign: 'center',
+        marginTop: 32,
+    }
 })
