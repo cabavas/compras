@@ -1,4 +1,4 @@
-import { Alert, Image, View, TouchableOpacity, Text, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, Image, View, TouchableOpacity, Text, Modal, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { Button } from '../../components/Button';
@@ -199,15 +199,19 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {itensFiltrados.map((item) => (
-          <ItemComponent
-            key={item.id}
-            item={item}
-            onRemove={() => removerItem(item.id)}
-            onPress={() => iniciarCompra(item)}
-            accessibilityLabel={item.status === FilterStatus.PENDING ? `Comprar ${item.name}` : item.name}
-          />
-        ))}
+        <FlatList
+          data={itensFiltrados}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <ItemComponent
+              key={item.id}
+              item={item}
+              onRemove={() => removerItem(item.id)}
+              onPress={() => iniciarCompra(item)}
+              accessibilityLabel={item.status === FilterStatus.PENDING ? `Comprar ${item.name}` : item.name}
+            />
+          )}
+        />
       </View>
       <Modal
         visible={itemEmCompra !== null}
