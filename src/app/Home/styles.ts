@@ -59,12 +59,28 @@ export const styles = StyleSheet.create({
         color: "#828282",
         fontWeight: 600
     },
-    inputRow: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    input: {
+    modalOverlay: {
         flex: 1,
-        width: 'auto',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    },
+    purchaseForm: {
+        width: '100%',
+        maxWidth: 480,
+        alignSelf: 'center',
+        borderRadius: 16,
+        padding: 24,
+        gap: 12,
+        backgroundColor: '#fff',
+    },
+    purchaseTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#245C2A',
+    },
+    cancelButton: {
+        alignItems: 'center',
+        padding: 12,
     },
 })

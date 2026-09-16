@@ -1,4 +1,4 @@
-import { Alert, Image, View, TouchableOpacity, Text } from 'react-native';
+import { Alert, Image, View, TouchableOpacity, Text, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { Button } from '../../components/Button';
@@ -20,6 +20,8 @@ export default function Home() {
   const [itens, setItens] = useState<ItemType[]>([]);
   const [quantidade, setQuantidade] = useState('');
   const [preco, setPreco] = useState('');
+  const [itemEmCompra, setItemEmCompra] = useState<ItemType | null>(null);
+  const [salvandoCompra, setSalvandoCompra] = useState(false);
   const [filtro, setFiltro] = useState<FilterStatus>(FilterStatus.PENDING);
 
   useEffect(() => {
@@ -35,33 +37,14 @@ export default function Home() {
   }
 
   async function adicionarItem() {
-    const quantity = Number(quantidade.trim().replace(',', '.'));
-    const price = Number(preco.trim().replace(',', '.'));
     if (!item.trim()) {
       Alert.alert('Nome obrigatório', 'Por favor, insira o nome do item.');
       return;
     }
 
-    if (
-      !quantidade || isNaN(quantity) || quantity <= 0
-    ) {
-      Alert.alert('Quantidade inválida', 'Por favor, insira uma quantidade válida.');
-      return;
-    }
-
-    if (
-      !preco || isNaN(price) || price <= 0
-    ) {
-      Alert.alert('Preço inválido', 'Por favor, insira um preço válido.');
-      return;
-    }
-
     const novoItem: ItemType = {
       id: new Date().getTime().toString(),
-      name: item,
-      quantity: quantity,
-      price: price,
-      total: quantity * price,
+      name: item.trim(),
       status: FilterStatus.PENDING,
     };
 
@@ -71,8 +54,6 @@ export default function Home() {
       await AsyncStorage.setItem('itens', JSON.stringify(itensAtualizados));
       setItens(itensAtualizados);
       setItem('');
-      setQuantidade('');
-      setPreco('');
     } catch {
       Alert.alert('Erro ao adicionar item', 'Não foi possível adicionar o item. Tente novamente.');
     }
@@ -85,16 +66,63 @@ export default function Home() {
     setItens(itensAtualizados);
   }
 
-  async function marcarComoFeito(id: string) {
-    const itensAtualizados = itens.map((item) => {
-      if (item.id === id) {
-        return { ...item, status: FilterStatus.DONE };
-      }
-      return item;
-    });
+  function iniciarCompra(item: ItemType) {
+    if (item.status === FilterStatus.DONE) return;
+    setQuantidade('');
+    setPreco('');
+    setItemEmCompra(item);
+  }
 
-    await AsyncStorage.setItem('itens', JSON.stringify(itensAtualizados));
-    setItens(itensAtualizados);
+  function cancelarCompra() {
+    if (salvandoCompra) return;
+    setItemEmCompra(null);
+    setQuantidade('');
+    setPreco('');
+  }
+
+  async function confirmarCompra() {
+    if (!itemEmCompra || salvandoCompra) return;
+
+    const quantity = Number(quantidade.trim().replace(',', '.'));
+    const price = Number(preco.trim().replace(',', '.'));
+    if (
+      !quantidade || !Number.isFinite(quantity) || quantity <= 0
+    ) {
+      Alert.alert('Quantidade inválida', 'Por favor, insira uma quantidade válida.');
+      return;
+    }
+
+    if (
+      !preco || !Number.isFinite(price) || price <= 0
+    ) {
+      Alert.alert('Preço inválido', 'Por favor, insira um preço válido.');
+      return;
+    }
+
+    const total = quantity * price;
+    if (!Number.isFinite(total * 100)) {
+      Alert.alert('Total inválido', 'Por favor, revise a quantidade e o preço.');
+      return;
+    }
+
+    const itensAtualizados: ItemType[] = itens.map((item) =>
+      item.id === itemEmCompra.id
+        ? { ...item, quantity, price, total, status: FilterStatus.DONE }
+        : item,
+    );
+
+    setSalvandoCompra(true);
+    try {
+      await AsyncStorage.setItem('itens', JSON.stringify(itensAtualizados));
+      setItens(itensAtualizados);
+      setItemEmCompra(null);
+      setQuantidade('');
+      setPreco('');
+    } catch {
+      Alert.alert('Erro ao comprar item', 'Não foi possível salvar a compra. Tente novamente.');
+    } finally {
+      setSalvandoCompra(false);
+    }
   }
 
   async function limparItens() {
@@ -136,23 +164,6 @@ export default function Home() {
           value={item}
           onChangeText={setItem}
         />
-        <View style={styles.inputRow}>
-          <Input
-            style={styles.input}
-            placeholder="Quantidade"
-            value={quantidade}
-            onChangeText={setQuantidade}
-            keyboardType="decimal-pad"
-          />
-
-          <Input
-            style={styles.input}
-            placeholder="Preço unitário (R$)"
-            value={preco}
-            onChangeText={setPreco}
-            keyboardType="decimal-pad"
-          />
-        </View>
         <Button
           title="Adicionar"
           onPress={adicionarItem} />
@@ -193,10 +204,57 @@ export default function Home() {
             key={item.id}
             item={item}
             onRemove={() => removerItem(item.id)}
-            onPress={() => marcarComoFeito(item.id)}
+            onPress={() => iniciarCompra(item)}
+            accessibilityLabel={item.status === FilterStatus.PENDING ? `Comprar ${item.name}` : item.name}
           />
         ))}
       </View>
+      <Modal
+        visible={itemEmCompra !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={cancelarCompra}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.purchaseForm}>
+            <Text style={styles.purchaseTitle}>Comprar {itemEmCompra?.name}</Text>
+            <Text>Quantidade</Text>
+            <Input
+              placeholder="Quantidade"
+              accessibilityLabel="Quantidade"
+              value={quantidade}
+              onChangeText={setQuantidade}
+              keyboardType="decimal-pad"
+              editable={!salvandoCompra}
+            />
+            <Text>Preço unitário (R$)</Text>
+            <Input
+              placeholder="Preço unitário (R$)"
+              accessibilityLabel="Preço unitário em reais"
+              value={preco}
+              onChangeText={setPreco}
+              keyboardType="decimal-pad"
+              editable={!salvandoCompra}
+            />
+            <Button
+              title={salvandoCompra ? 'Salvando...' : 'Confirmar compra'}
+              onPress={confirmarCompra}
+              disabled={salvandoCompra}
+            />
+            <TouchableOpacity
+              onPress={cancelarCompra}
+              disabled={salvandoCompra}
+              accessibilityRole="button"
+              style={styles.cancelButton}
+            >
+              <Text>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }

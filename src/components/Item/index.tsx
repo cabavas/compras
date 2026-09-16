@@ -17,7 +17,11 @@ export function Item({ item, onRemove, ...rest }: Props) {
                 ? <CircleCheck />
                 : <CircleDashed />}
             <Text style={styles.text}>{item.name}</Text>
-            <Text style={styles.text}>R$ {item.total.toFixed(2)}</Text>
+            <Text style={styles.text}>
+                {item.status === FilterStatus.DONE
+                    ? `R$ ${item.total.toFixed(2)}`
+                    : 'Comprar'}
+            </Text>
             <TouchableOpacity
                 style={styles.clearButton}
                 onPress={(event) => {
